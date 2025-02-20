@@ -46,16 +46,15 @@ async function getHeroName(heroId) {
   return heroes.get(Number(heroId)) || `Unknown Hero (${heroId})`;
 }
 
-// Update the getTeamHeroes function to handle the correct API response format
+// Function to extract team hero IDs from a match object.
+// If the match data does not include player details, return empty arrays.
 function getTeamHeroes(match) {
   const radiantHeroes = [];
   const direHeroes = [];
 
-  // The API returns an array of player data in the 'players' property
-  if (match.players) {
+  if (match.players && match.players.length > 0) {
     match.players.forEach((player, index) => {
       if (player.hero_id) {
-        // Assuming the first five players are Radiant and the rest Dire
         if (index < 5) {
           radiantHeroes.push(player.hero_id);
         } else {
@@ -64,6 +63,10 @@ function getTeamHeroes(match) {
       }
     });
   }
+
+  // Debug logging
+  console.log('Radiant Heroes:', radiantHeroes);
+  console.log('Dire Heroes:', direHeroes);
 
   return { radiantHeroes, direHeroes };
 }
@@ -102,12 +105,8 @@ async function fetchMatches() {
       for (let i = 0; i < pagesToFetch; i++) {
         let url = baseUrl;
         if (lastMatchId) {
-          // Check if the baseUrl already contains a query parameter
-          if (baseUrl.includes('?')) {
-            url += `&less_than_match_id=${lastMatchId}`;
-          } else {
-            url += `?less_than_match_id=${lastMatchId}`;
-          }
+          // Append the pagination parameter with the correct separator
+          url += (baseUrl.includes('?') ? '&' : '?') + `less_than_match_id=${lastMatchId}`;
         }
 
         const response = await fetch(url);
@@ -137,9 +136,13 @@ async function fetchMatches() {
     let matchesDisplayed = 0;
     for (const match of matchesCache) {
       const { radiantHeroes, direHeroes } = getTeamHeroes(match);
-		const shouldDisplay = !selectedHeroId ||
-			radiantHeroes.includes(Number(selectedHeroId)) ||
-			direHeroes.includes(Number(selectedHeroId));
+      // Determine if the match has player data
+      const hasPlayerData = match.players && match.players.length > 0;
+      // Apply hero filtering only if player data is available
+      const shouldDisplay = !selectedHeroId || (hasPlayerData && (
+        radiantHeroes.includes(Number(selectedHeroId)) ||
+        direHeroes.includes(Number(selectedHeroId))
+      ));
 
       if (shouldDisplay) {
         const listItem = document.createElement('li');
@@ -147,11 +150,18 @@ async function fetchMatches() {
 
         const timeAgo = new Date(match.start_time * 1000).toLocaleString();
 
-        // Retrieve hero names for each team
-        const radiantHeroNames = await Promise.all(radiantHeroes.map(getHeroName));
-        const direHeroNames = await Promise.all(direHeroes.map(getHeroName));
+        let radiantHeroNamesHTML, direHeroNamesHTML;
+        if (hasPlayerData && radiantHeroes.length && direHeroes.length) {
+          // Retrieve hero names for each team
+          const radiantHeroNames = await Promise.all(radiantHeroes.map(getHeroName));
+          const direHeroNames = await Promise.all(direHeroes.map(getHeroName));
+          radiantHeroNamesHTML = radiantHeroNames.join(', ');
+          direHeroNamesHTML = direHeroNames.join(', ');
+        } else {
+          radiantHeroNamesHTML = 'Hero data not available';
+          direHeroNamesHTML = 'Hero data not available';
+        }
 
-        // Build match display with additional details
         listItem.innerHTML = `
           <div class="match-header">
             <span class="match-id">Match ID: ${match.match_id}</span>
@@ -164,12 +174,12 @@ async function fetchMatches() {
           <div class="teams">
             <div class="radiant-team">
               <h4 class="team-header">Radiant Team</h4>
-              ${radiantHeroNames.join(', ')}
+              ${radiantHeroNamesHTML}
               ${match.radiant_score ? `<div class="team-score">Score: ${match.radiant_score}</div>` : ''}
             </div>
             <div class="dire-team">
               <h4 class="team-header">Dire Team</h4>
-              ${direHeroNames.join(', ')}
+              ${direHeroNamesHTML}
               ${match.dire_score ? `<div class="team-score">Score: ${match.dire_score}</div>` : ''}
             </div>
           </div>
