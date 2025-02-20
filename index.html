@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
+  <title>Dota 2 Match Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Dota 2 Recent Matches</h1>
+    
+    <div class="filters">
+      <select id="mmrSelect" class="styled-select">
+        <option value="">All MMR Brackets</option>
+        <option value="0-1000">0 - 1000</option>
+        <option value="1000-2000">1000 - 2000</option>
+        <option value="2000-3000">2000 - 3000</option>
+        <option value="3000-4000">3000 - 4000</option>
+        <option value="4000-5000">4000 - 5000</option>
+        <option value="5000-6000">5000 - 6000</option>
+        <option value="6000-7000">6000 - 7000</option>
+        <option value="7000">7000+</option>
+      </select>
+      
+      <select id="heroSelect" class="styled-select">
+        <option value="">All Heroes</option>
+      </select>
+      
+      <button id="filterButton" class="styled-button">Filter Matches</button>
+    </div>
+
+    <div class="matches-container">
+      <ul id="matchesList" class="matches-list">
+        <!-- Match items will be inserted here -->
+      </ul>
+    </div>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
